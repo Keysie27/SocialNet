@@ -1,0 +1,141 @@
+﻿@using Microsoft.AspNetCore.Http
+@using SGP.Core.Application.Helpers;
+@using SGP.Core.Application.ViewModels.Usuarios
+@inject IHttpContextAccessor httpContextAccessor
+@model SGP.Core.Application.ViewModels.Amistades.AmistadViewModel
+@{
+    ViewData["Title"] = "Amistades";
+    int contador = 0;
+    var User = httpContextAccessor.HttpContext.Session.Get<UsuarioViewModel>("user");
+}
+
+<h1 class="text-primary font-weight-bold">Amistades</h1>
+<hr />
+<div class="container">
+    <div class="row">
+        <div class="col-9">
+            @if (Model == null || Model.Publicaciones.Count == 0)
+            {
+                <h2>No hay publicaciones.</h2>
+            }
+            else
+            {
+                @foreach (SGP.Core.Application.ViewModels.Publicaciones.PublicacionViewModel publicacion in Model.Publicaciones)
+                {
+                    @if (User.IdUsuario != publicacion.IdUsuario)
+                    {
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <div class="row">
+                                    <div class="col-5">
+                                        <img class="fotoUsuario" src="@publicacion.Usuario.FotoUrl" />
+                                        <span>@publicacion.Usuario.Nombre @publicacion.Usuario.Apellido</span>
+                                    </div>
+                                    <div class="col-4"></div>
+                                    <div class="col-3">
+                                        <p class="card-text"><small class="text-muted">@publicacion.FechaHora</small></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">@publicacion.Contenido</p>
+                                <hr />
+                                <form method="post" asp-controller="Amistades" asp-action="AgregarComentario">
+                                    <span asp-validation-for="Comentario.Contenido" class="form-text text-danger"></span>
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" asp-for="Comentario.Contenido">
+                                        <button class="btn btn-secondary" type="submit">Comentar</button>
+                                    </div>
+                                    <input type="hidden" asp-for="Comentario.IdComentario" />
+                                    <input type="hidden" asp-for="Comentario.FechaHora" />
+                                    <input type="hidden" asp-for="Comentario.IdPublicacion" value="@publicacion.IdPublicacion" />
+                                    <input type="hidden" asp-for="Comentario.IdUsuario" value="@User.IdUsuario" />
+                                </form>
+                            </div>
+                            <div class="card-footer">
+                                <p class="d-inline-flex gap-1 mb-2">
+                                    <a class="text-muted text-decoration-underline" data-bs-toggle="collapse" href="@("#collapseComentarios" + contador)" role="button" aria-expanded="false" aria-controls="@("collapseComentarios" + contador)">
+                                        Ver Comentarios
+                                    </a>
+                                </p>
+                                <div class="collapse" id="@("collapseComentarios" + contador)">
+                                    @if (Model.Comentarios.Count != 0)
+                                    {
+                                        @foreach (SGP.Core.Application.ViewModels.Comentarios.ComentarioViewModel comentario in Model.Comentarios)
+                                        {
+                                            @if (publicacion.IdPublicacion == comentario.IdPublicacion)
+                                            {
+                                                <div class="card card-body mt-2">
+                                                    <div class="row mb-2">
+                                                        <div class="col-5">
+                                                            <img class="fotoUsuario" src="@comentario.Usuario.FotoUrl" />
+                                                            <span>@comentario.Usuario.Nombre @comentario.Usuario.Apellido</span>
+                                                        </div>
+                                                        <div class="col-4"></div>
+                                                        <div class="col-3">
+                                                            <p class="card-text"><small class="text-muted">@comentario.FechaHora</small></p>
+                                                        </div>
+                                                    </div>
+                                                    <p>@comentario.Contenido</p>
+                                                </div>
+                                            }
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    contador++;
+                }
+            }
+        </div>
+        <div class="col-3">
+            <h2 class="text-secundary font-weight-bold mb-3">Lista de amigos:</h2>
+            <form asp-controller="Amistades" asp-action="AgregarAmistad">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Usuario" asp-for="UsuarioAmigo">
+                    <button class="btn btn-primary" type="submit" id="button-addon2">Agregar</button>
+                </div>
+                <input type="hidden" asp-for="IdUsuario" value="@User.IdUsuario" />
+            </form>
+            <ul class="list-group">
+                @foreach (SGP.Core.Application.ViewModels.Usuarios.UsuarioViewModel usuario in Model.Usuarios)
+                {
+                    @if (usuario.IdUsuario != User.IdUsuario)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">@usuario.NombreUsuario</div>
+                                <span class="text-muted">@usuario.Correo</span>
+                            </div>
+                            <button type="button" class="btn btn-danger badge rounded-pill" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+                                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0,0,256,256">
+                                    <g fill-opacity="0.74118" fill="#000000" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><g transform="scale(5.33333,5.33333)"><path d="M24,4c-3.50831,0 -6.4296,2.62143 -6.91992,6h-10.58008c-0.54095,-0.00765 -1.04412,0.27656 -1.31683,0.74381c-0.27271,0.46725 -0.27271,1.04514 0,1.51238c0.27271,0.46725 0.77588,0.75146 1.31683,0.74381h2.13672l2.51953,26.0293c0.274,2.833 2.62956,4.9707 5.47656,4.9707h14.73438c2.847,0 5.20156,-2.1377 5.47656,-4.9707l2.51953,-26.0293h2.13672c0.54095,0.00765 1.04412,-0.27656 1.31683,-0.74381c0.27271,-0.46725 0.27271,-1.04514 0,-1.51238c-0.27271,-0.46725 -0.77588,-0.75146 -1.31683,-0.74381h-10.58008c-0.49032,-3.37857 -3.41161,-6 -6.91992,-6zM24,7c1.87916,0 3.42077,1.26816 3.86133,3h-7.72266c0.44056,-1.73184 1.98217,-3 3.86133,-3zM19.5,18c0.828,0 1.5,0.671 1.5,1.5v15c0,0.829 -0.672,1.5 -1.5,1.5c-0.828,0 -1.5,-0.671 -1.5,-1.5v-15c0,-0.829 0.672,-1.5 1.5,-1.5zM28.5,18c0.828,0 1.5,0.671 1.5,1.5v15c0,0.829 -0.672,1.5 -1.5,1.5c-0.828,0 -1.5,-0.671 -1.5,-1.5v-15c0,-0.829 0.672,-1.5 1.5,-1.5z"></path></g></g>
+                                </svg>
+                            </button>
+                        </li>
+                    }
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+@* MODAL *@
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="staticBackdropLabel">Eliminar amigo</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,150 @@
+﻿@using Microsoft.AspNetCore.Http
+@using SGP.Core.Application.Helpers;
+@using SGP.Core.Application.ViewModels.Usuarios
+@inject IHttpContextAccessor httpContextAccessor
+@model SGP.Core.Application.ViewModels.Publicaciones.PublicacionViewModel
+@{ 
+    ViewData["Title"] = "Publicaciones";
+    int contador = 0;
+    var User = httpContextAccessor.HttpContext.Session.Get<UsuarioViewModel>("user");
+}
+
+<h1 class="text-primary font-weight-bold">Nueva publicación:</h1>
+
+<form method="post" asp-controller="Publicaciones" asp-action="CreatePublicacion">
+    <div class="form-floating mb-2">
+        <textarea class="form-control textarea" asp-for="Contenido" style="height: 6em;"></textarea>
+        <span asp-validation-for="Contenido" class="form-text text-danger"></span>
+    </div>
+
+    <input type="hidden" asp-for="IdPublicacion" />
+    <input type="hidden" asp-for="FechaHora" />
+    <input type="hidden" asp-for="IdUsuario" value=@User.IdUsuario/>
+
+    <div class="container">
+        <div class="row">
+            <button type="submit" class="btn btn-primary col-2">Publicar</button>
+@*             <div class="col-4"></div>
+            <div class="col-6 p-0">
+                <input type="file" class="form-control" aria-label="Upload">
+            </div> *@
+        </div>
+    </div>
+</form>
+
+<hr />
+<h1 class="text-primary font-weight-bold mt-2">Mis publicaciones:</h1>
+
+@if (Model == null || Model.Publicaciones.Count == 0)
+{
+    <h3>No hay publicaciones agregadas.</h3>
+}
+else
+{
+    @foreach (SGP.Core.Application.ViewModels.Publicaciones.PublicacionViewModel publicacion in Model.Publicaciones)
+    {
+        @if (User.IdUsuario == publicacion.IdUsuario)
+        {
+            <div class="card mt-4">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-4">
+                            <img class="fotoUsuario" src="@User.FotoUrl" />
+                            <span>@User.Nombre @User.Apellido</span>
+                        </div>
+                        <div class="col-5"></div>
+                        <div class="col-3">
+                            <p class="card-text"><small class="text-muted">@publicacion.FechaHora</small></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">@publicacion.Contenido</p>
+                    <hr />
+                    <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="@("#staticBackdropEdit" + contador)">Editar</button>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="@("#staticBackdropDelete" + contador)">Eliminar</button>
+                </div>
+                <div class="card-footer">
+                    <p class="d-inline-flex gap-1 mb-2">
+                        <a class="text-muted text-decoration-underline" data-bs-toggle="collapse" href="@("#collapseComentarios" + contador)" role="button" aria-expanded="false" aria-controls="@("collapseComentarios" + contador)">
+                            Ver Comentarios
+                        </a>
+                    </p>
+                    <div class="collapse" id="@("collapseComentarios" + contador)">
+                        @if (Model.Comentarios.Count != 0)
+                        {
+                            @foreach (SGP.Core.Application.ViewModels.Comentarios.ComentarioViewModel comentario in Model.Comentarios)
+                            {
+                                @if (publicacion.IdPublicacion == comentario.IdPublicacion)
+                                {
+                                    <div class="card card-body mt-2">
+                                        <div class="row mb-2">
+                                            <div class="col-4">
+                                                <img class="fotoUsuario" src="@comentario.Usuario.FotoUrl" />
+                                                <span>@comentario.Usuario.Nombre @comentario.Usuario.Apellido</span>
+                                            </div>
+                                            <div class="col-5"></div>
+                                            <div class="col-3">
+                                                <p class="card-text"><small class="text-muted">@comentario.FechaHora</small></p>
+                                            </div>
+                                        </div>
+                                        <p>@comentario.Contenido</p>
+                                    </div>
+                                }
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        @* MODAL Update *@
+        <div class="modal fade" id="@("staticBackdropEdit" + contador)" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel">Modificar Publicación</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="post" asp-controller="Publicaciones" asp-action="EditPublicacion">
+                        <div class="modal-body">
+                            <div class="form-floating">
+                                <textarea asp-for="Contenido" class="form-control">@publicacion.Contenido</textarea>
+                                <span asp-validation-for="Contenido" class="form-text text-danger"></span>
+                            </div>
+                        </div>
+                        <input type="hidden" asp-for="IdPublicacion" value="@publicacion.IdPublicacion" />
+                        <input type="hidden" asp-for="FechaHora" value="@publicacion.FechaHora" />
+                        <input type="hidden" asp-for="IdUsuario" value="@publicacion.IdUsuario" />
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-warning">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        @* MODAL Delete *@
+        <div class="modal fade" id="@("staticBackdropDelete" + contador)" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel">Borrar Publicación</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        ¿Está seguro de que desea eliminar esta publicación?
+                    </div>
+                    <div class="modal-footer">
+                        <a class="btn btn-danger" asp-controller="Publicaciones" asp-action="DeletePublicacion" asp-route-IdPublicacion="@publicacion.IdPublicacion">Eliminar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        contador++;
+    }
+}
+
+
+
